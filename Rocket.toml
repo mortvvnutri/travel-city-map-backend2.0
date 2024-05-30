@@ -1,0 +1,2 @@
+[default.databases.my_pg_db]
+url = "postgres://postgres:root@92.63.176.224/travel"
