@@ -1,0 +1,100 @@
+Мне нужно написать backend для сайта с использованием Rocket.rs, SeaORM и базы данных Postgresql
+структура папок:
+    /data_func
+        mod.rc
+        categories.rs
+        notifications.rs
+        places.rs
+        reviews.rs
+        route_points.rs
+        routes.rs
+        users.rs
+    /routers
+        mod.rc
+        categories.rs
+        notifications.rs
+        places.rs
+        reviews.rs
+        route_points.rs
+        routes.rs
+        users.rs
+    /utils
+        mod.rs
+        database.rs
+    main.rs
+структура базы данных:
+Table "Users" {
+  "id" SERIAL [pk, increment]
+  "username" VARCHAR(50) [unique, not null]
+  "password_hash" VARCHAR(255) [not null]
+  "email" VARCHAR(100) [unique, not null]
+  "yandex_id" VARCHAR(100) [unique]
+  "registration_date" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "Categories" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(100) [not null]
+  "parent_id" INTEGER
+}
+
+Table "Places" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(255) [not null]
+  "description" TEXT
+  "category_id" INTEGER
+  "latitude" DOUBLEPRECISION [not null]
+  "longitude" DOUBLEPRECISION [not null]
+  "puskinskaya_card" BOOLEAN [default: FALSE]
+}
+
+Table "Routes" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER
+  "name" VARCHAR(255)
+  "creation_date" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "public_transport_info" TEXT
+}
+
+Table "RoutePoints" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER
+  "route_id" INTEGER
+  "place_id" INTEGER
+  "sequence_number" INTEGER [not null]
+}
+
+Table "Reviews" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER
+  "place_id" INTEGER
+  "rating" INTEGER
+  "comment" TEXT
+  "creation_date" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "Notifications" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER
+  "message" TEXT [not null]
+  "creation_date" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "is_read" BOOLEAN [default: FALSE]
+}
+
+Ref:"Categories"."id" < "Categories"."parent_id"
+
+Ref:"Categories"."id" < "Places"."category_id"
+
+Ref:"Users"."id" < "Routes"."user_id"
+
+Ref:"Users"."id" < "RoutePoints"."user_id"
+
+Ref:"Routes"."id" < "RoutePoints"."route_id" [delete: cascade]
+
+Ref:"Places"."id" < "RoutePoints"."place_id"
+
+Ref:"Users"."id" < "Reviews"."user_id"
+
+Ref:"Places"."id" < "Reviews"."place_id"
+
+Ref:"Users"."id" < "Notifications"."user_id"

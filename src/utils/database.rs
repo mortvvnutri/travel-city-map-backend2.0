@@ -1,16 +1,12 @@
 use tokio_postgres::{Client, NoTls, Error};
 
-pub async fn create_tables(client: &mut Client) -> Result<(), Error> {
+pub async fn setup_database(client: &tokio_postgres::Client) -> Result<(), tokio_postgres::Error> {
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS Users (
             id SERIAL PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            yandex_id VARCHAR(100) UNIQUE,
-            registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            username VARCHAR(50) UNIQUE NOT NULL
         );
-    ")?;
+    ").await?;
 
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS Categories (
@@ -18,60 +14,49 @@ pub async fn create_tables(client: &mut Client) -> Result<(), Error> {
             name VARCHAR(100) NOT NULL,
             parent_id INTEGER REFERENCES Categories(id)
         );
-    ")?;
+    ").await?;
 
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS Places (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
-            description TEXT,
-            category_id INTEGER REFERENCES Categories(id),
-            latitude DOUBLE PRECISION NOT NULL,
-            longitude DOUBLE PRECISION NOT NULL,
-            puskinskaya_card BOOLEAN DEFAULT FALSE
+            category_id INTEGER REFERENCES Categories(id)
         );
-    ")?;
+    ").await?;
 
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS Routes (
             id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES Users(id),
-            name VARCHAR(255),
-            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            public_transport_info TEXT
+            user_id INTEGER REFERENCES Users(id)
         );
-    ")?;
+    ").await?;
 
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS RoutePoints (
             id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES Users(id),
-            route_id INTEGER REFERENCES Routes(id) ON DELETE CASCADE,
-            place_id INTEGER REFERENCES Places(id),
-            sequence_number INTEGER NOT NULL
+            route_id INTEGER REFERENCES Routes(id),
+            place_id INTEGER REFERENCES Places(id)
         );
-    ")?;
+    ").await?;
 
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS Reviews (
             id SERIAL PRIMARY KEY,
             user_id INTEGER REFERENCES Users(id),
             place_id INTEGER REFERENCES Places(id),
-            rating INTEGER,
-            comment TEXT,
-            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            review_text TEXT NOT NULL,
+            rating INTEGER NOT NULL
         );
-    ")?;
+    ").await?;
 
     client.batch_execute("
         CREATE TABLE IF NOT EXISTS Notifications (
             id SERIAL PRIMARY KEY,
             user_id INTEGER REFERENCES Users(id),
             message TEXT NOT NULL,
-            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_read BOOLEAN DEFAULT FALSE
+            read BOOLEAN NOT NULL DEFAULT FALSE
         );
-    ")?;
+    ").await?;
 
     Ok(())
 }
